@@ -1,0 +1,12 @@
+asgiref==3.5.2
+certifi==2022.6.15
+distlib==0.3.4
+dj-database-url==1.0.0
+Django==4.0.5
+Pillow==9.2.0
+pycodestyle==2.8.0
+python-decouple==3.6
+sqlparse==0.4.2
+tzdata==2022.1
+virtualenv==20.14.1
+
