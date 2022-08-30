@@ -1,7 +1,9 @@
+from xmlrpc.client import ResponseError
 from rest_framework.exceptions import ValidationError
 from django.shortcuts import render
 from posts import serializers
-from rest_framework import generics
+from rest_framework import generics, permissions, mixins, status
+from rest_framework.response import Response
 from .models import Post, Vote
 from .serializers import PostSerializer, VoteSerializer
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
@@ -21,8 +23,8 @@ class PostList(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(poster=self.request.user)
 
-# UPVOTE VIEW
-class VoteCreate(generics.CreateAPIView):
+# UPVOTE VIEW... the mixins.DestroyModelMixin deletes votes
+class VoteCreate(generics.CreateAPIView, mixins.DestroyModelMixin):
     serializer_class = VoteSerializer
     permission_classes = [IsAuthenticated]
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -38,3 +40,28 @@ class VoteCreate(generics.CreateAPIView):
             raise ValidationError('You have already voted for this post:) ')
 
         serializer.save(voter=self.request.user, post = Post.objects.get(pk=self.kwargs['pk']))
+
+# delete functionality, we use mixins-- this deletes a vote.
+    def delete(self, request, *args, **kwargs):
+        # 1. IF A VOTE EXISTS
+        if self.get_queryset().exists():
+            self.get_queryset().delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            raise ValidationError('You never voted for this post')
+
+
+# delete a post
+class PostRetrieveDestroyAPIView(generics.RetrieveDestroyAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+# permission to create this api
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def delete(self, request, *args, **kwargs):
+        post = Post.objects.filter(pk=kwargs['pk'],  poster=self.request.user)
+        if post.exists():
+            return self.destroy(request, *args, **kwargs)
+        else:
+            raise ValidationError('This is not your post to delete')
+

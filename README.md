@@ -1,2 +1,2 @@
 # zappit-Project
-Reddit Clone while learning Django Rest Framework
+Django REST API to mimic the upvoting, and posting of posts
